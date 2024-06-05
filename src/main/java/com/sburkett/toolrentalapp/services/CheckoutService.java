@@ -1,6 +1,6 @@
 package com.sburkett.toolrentalapp.services;
 
-import com.sburkett.toolrentalapp.constants.Tool;
+import com.sburkett.toolrentalapp.config.ToolConfig;
 import com.sburkett.toolrentalapp.dto.CheckoutRequest;
 import com.sburkett.toolrentalapp.dto.RentalAgreementResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -18,24 +18,12 @@ import java.util.*;
 @Service
 @Slf4j
 public class CheckoutService {
-    Map<String, Tool> toolInfoMap = new HashMap<>();
-    Map<String, String> toolPriceMap = new HashMap<>();
-    Set<LocalDate> holidays = new HashSet<>();
+    private final Set<LocalDate> holidays = new HashSet<>();
     private final String requestId = UUID.randomUUID().toString();
+    private final ToolConfig toolConfig;
 
-    public CheckoutService() {
-        initialize();
-    }
-
-    private void initialize() {
-        toolInfoMap.put("CHNS", new Tool("CHNS", "Chainsaw", "Stihl"));
-        toolInfoMap.put("LADW", new Tool("LADW", "Ladder", "Werner"));
-        toolInfoMap.put("JAKD", new Tool("JAKD", "Jackhammer", "DeWalt"));
-        toolInfoMap.put("JAKR", new Tool("JAKR", "Jackhammer", "Ridgid"));
-
-        toolPriceMap.put("Ladder", "1.99");
-        toolPriceMap.put("Chainsaw", "1.49");
-        toolPriceMap.put("Jackhammer", "2.99");
+    public CheckoutService(ToolConfig toolConfig) {
+        this.toolConfig = toolConfig;
     }
 
     public RentalAgreementResponse processCheckout(CheckoutRequest request) {
@@ -49,21 +37,22 @@ public class CheckoutService {
         holidays.add(LocalDate.of(checkoutDate.getYear(), 7, 4)); // July 4
         holidays.add(getLaborDay(checkoutDate.getYear()));
 
-        String toolType = toolInfoMap.get(checkoutRequest.getToolCode()).getToolType();
+        String toolType = toolConfig.getToolInfoMap().get(checkoutRequest.getToolCode()).get("tooltype");
         LocalDate dueDate = checkoutDate.plusDays(checkoutRequest.getRentalDayCount());
         String chargeDays = getNumberOfChargeableDays(toolType, checkoutDate, dueDate);
-        String preDiscountCharge = calculatePreDiscountCharge(toolType, chargeDays);
+        String dailyRentalCharge = toolConfig.getToolPriceMap().get(toolType.toLowerCase()).get("dailycharge");
+        String preDiscountCharge = calculatePreDiscountCharge(dailyRentalCharge, chargeDays);
         String discountAmount = calculateDiscountAmount(checkoutRequest.getDiscountPercent(), preDiscountCharge);
         String finalCharge = calculateFinalCharge(preDiscountCharge, discountAmount);
 
         RentalAgreementResponse response = RentalAgreementResponse.builder()
-                .toolCode(toolInfoMap.get(checkoutRequest.getToolCode()).getToolCode())
+                .toolCode(checkoutRequest.getToolCode())
                 .toolType(toolType)
-                .toolBrand(toolInfoMap.get(checkoutRequest.getToolCode()).getToolBrand())
+                .toolBrand(toolConfig.getToolInfoMap().get(checkoutRequest.getToolCode()).get("brand"))
                 .rentalDays(String.valueOf(checkoutRequest.getRentalDayCount()))
                 .checkOutDate(checkoutDate.format(formatter))
                 .dueDate(dueDate.format(formatter))
-                .dailyRentalCharge(toolPriceMap.get(toolInfoMap.get(checkoutRequest.getToolCode()).getToolType()))
+                .dailyRentalCharge(dailyRentalCharge)
                 .chargeDays(chargeDays)
                 .preDiscountCharge(String.format("$%s", preDiscountCharge))
                 .discountPercent(checkoutRequest.getDiscountPercent() + "%")
@@ -71,7 +60,7 @@ public class CheckoutService {
                 .finalCharge(String.format("$%s", finalCharge))
                 .build();
 
-        log.info("RESPONSE FOR ID: {} {}", requestId, response);
+        log.info("RESPONSE: {} {}", requestId, response);
 
         return response;
     }
@@ -82,14 +71,15 @@ public class CheckoutService {
         // Iterate from day after checkout to the due date
         for (LocalDate date = checkoutDate.plusDays(1); !date.isAfter(dueDate); date = date.plusDays(1)) {
             boolean isWeekend = date.getDayOfWeek() == DayOfWeek.SATURDAY || date.getDayOfWeek() == DayOfWeek.SUNDAY;
+            boolean isHoliday = holidays.contains(date);
+            boolean weekdayCharge = Boolean.parseBoolean(toolConfig.getToolPriceMap().get(toolType.toLowerCase()).get("weekdaycharge"));
+            boolean weekendCharge = Boolean.parseBoolean(toolConfig.getToolPriceMap().get(toolType.toLowerCase()).get("weekendcharge"));
+            boolean holidayCharge = Boolean.parseBoolean(toolConfig.getToolPriceMap().get(toolType.toLowerCase()).get("holidaycharge"));
 
-            if ("ladder".equalsIgnoreCase(toolType) && holidays.contains(date)) {
-                continue;
-            } else if ("chainsaw".equalsIgnoreCase(toolType) && (isWeekend)) {
-                continue;
-            } else if ("jackhammer".equalsIgnoreCase(toolType) && (isWeekend) || holidays.contains(date)) {
-                continue;
-            }
+            // Don't increment the daily charge if no charge is applicable to that day
+            if (isHoliday && !holidayCharge) continue;
+            else if (!isWeekend && !weekdayCharge) continue; // checks if weekday
+            else if (isWeekend && !weekendCharge) continue;
 
             chargeableDays++;
         }
@@ -97,8 +87,8 @@ public class CheckoutService {
         return String.valueOf(chargeableDays);
     }
 
-    private String calculatePreDiscountCharge(String toolType, String chargeDays) {
-       return new BigDecimal(chargeDays).multiply(new BigDecimal(toolPriceMap.get(toolType))).setScale(2, RoundingMode.HALF_UP).toPlainString();
+    private String calculatePreDiscountCharge(String dailyRentalCharge, String chargeDays) {
+        return new BigDecimal(dailyRentalCharge).multiply(new BigDecimal(chargeDays)).setScale(2, RoundingMode.HALF_UP).toPlainString();
     }
 
     private String calculateDiscountAmount(String discountPercent, String preDiscountCharge) {

@@ -1,0 +1,37 @@
+server:
+    servlet:
+        context-path: "/toolrentalapp"
+    port: 8080
+
+application:
+  tool-info:
+    tool-info-map:
+      CHNS:
+        tooltype: Chainsaw
+        brand: Stihl
+      LADW:
+        tooltype: Ladder
+        brand: Werner
+      JAKD:
+        tooltype: Jackhammer
+        brand: DeWalt
+      JAKR:
+        tooltype: Jackhammer
+        brand: Ridgid
+    tool-price-map:
+      ladder:
+        dailycharge: 1.99
+        weekdaycharge: yes
+        weekendcharge: yes
+        holidaycharge: no
+      chainsaw:
+        dailycharge: 1.49
+        weekdaycharge: yes
+        weekendcharge: no
+        holidaycharge: yes
+      jackhammer:
+        dailycharge: 2.99
+        weekdaycharge: yes
+        weekendcharge: no
+        holidaycharge: no
+
