@@ -122,7 +122,7 @@ class ToolRentalApplicationTest {
 		String expected = "{\"errorMessage\":\"rentalDayCount: rentalDayCount must be 1 or greater\"}";
 		mockMvc.perform(MockMvcRequestBuilders
 						.post("/checkout")
-						.content(objectMapper.writeValueAsString(CheckoutRequest.builder().toolCode("JAKR").checkoutDate("09/03/215").rentalDayCount(0).discountPercent(0).build()))
+						.content(objectMapper.writeValueAsString(CheckoutRequest.builder().toolCode("JAKR").checkoutDate("09/03/15").rentalDayCount(0).discountPercent(0).build()))
 						.contentType(MediaType.APPLICATION_JSON))
 				.andExpect(status().is4xxClientError())
 				.andExpect(content().json(expected));
