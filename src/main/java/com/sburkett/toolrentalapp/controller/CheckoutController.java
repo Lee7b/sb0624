@@ -7,6 +7,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.validation.Valid;
+
 @RestController
 public class CheckoutController {
 
@@ -17,7 +19,7 @@ public class CheckoutController {
     }
 
     @PostMapping(value = "/checkout")
-    public RentalAgreementResponse checkoutController(@RequestBody CheckoutRequest request) {
+    public RentalAgreementResponse checkoutController(@Valid @RequestBody CheckoutRequest request) {
 
         return checkoutService.processCheckout(request);
     }

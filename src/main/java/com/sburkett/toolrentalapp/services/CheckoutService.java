@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.text.NumberFormat;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.Month;
@@ -18,9 +19,9 @@ import java.util.*;
 @Service
 @Slf4j
 public class CheckoutService {
-    private final Set<LocalDate> holidays = new HashSet<>();
     private final String requestId = UUID.randomUUID().toString();
     private final ToolConfig toolConfig;
+    private final Set<LocalDate> holidays = new HashSet<>();
 
     public CheckoutService(ToolConfig toolConfig) {
         this.toolConfig = toolConfig;
@@ -31,7 +32,7 @@ public class CheckoutService {
     }
 
     private RentalAgreementResponse buildCheckoutResponseAndLog(CheckoutRequest checkoutRequest) {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM/dd/yyyy");
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM/dd/yy");
         LocalDate checkoutDate = LocalDate.parse(checkoutRequest.getCheckoutDate(), formatter);
 
         holidays.add(LocalDate.of(checkoutDate.getYear(), 7, 4)); // July 4
@@ -39,11 +40,10 @@ public class CheckoutService {
 
         String toolType = toolConfig.getToolInfoMap().get(checkoutRequest.getToolCode()).get("tooltype");
         LocalDate dueDate = checkoutDate.plusDays(checkoutRequest.getRentalDayCount());
-        String chargeDays = getNumberOfChargeableDays(toolType, checkoutDate, dueDate);
+        int chargeDays = getNumberOfChargeableDays(toolType, checkoutDate, dueDate);
         String dailyRentalCharge = toolConfig.getToolPriceMap().get(toolType.toLowerCase()).get("dailycharge");
-        String preDiscountCharge = calculatePreDiscountCharge(dailyRentalCharge, chargeDays);
+        BigDecimal preDiscountCharge = calculatePreDiscountCharge(dailyRentalCharge, chargeDays);
         String discountAmount = calculateDiscountAmount(checkoutRequest.getDiscountPercent(), preDiscountCharge);
-        String finalCharge = calculateFinalCharge(preDiscountCharge, discountAmount);
 
         RentalAgreementResponse response = RentalAgreementResponse.builder()
                 .toolCode(checkoutRequest.getToolCode())
@@ -52,12 +52,12 @@ public class CheckoutService {
                 .rentalDays(String.valueOf(checkoutRequest.getRentalDayCount()))
                 .checkOutDate(checkoutDate.format(formatter))
                 .dueDate(dueDate.format(formatter))
-                .dailyRentalCharge(dailyRentalCharge)
-                .chargeDays(chargeDays)
-                .preDiscountCharge(String.format("$%s", preDiscountCharge))
+                .dailyRentalCharge(NumberFormat.getCurrencyInstance().format(new BigDecimal(dailyRentalCharge)))
+                .chargeDays(String.valueOf(chargeDays))
+                .preDiscountCharge(NumberFormat.getCurrencyInstance().format(preDiscountCharge))
                 .discountPercent(checkoutRequest.getDiscountPercent() + "%")
                 .discountAmount(String.format("$%s", discountAmount))
-                .finalCharge(String.format("$%s", finalCharge))
+                .finalCharge(NumberFormat.getCurrencyInstance().format(calculateFinalCharge(preDiscountCharge, discountAmount)))
                 .build();
 
         log.info("RESPONSE: {} {}", requestId, response);
@@ -65,7 +65,7 @@ public class CheckoutService {
         return response;
     }
 
-    private String getNumberOfChargeableDays(String toolType, LocalDate checkoutDate, LocalDate dueDate) {
+    private int getNumberOfChargeableDays(String toolType, LocalDate checkoutDate, LocalDate dueDate) {
         int chargeableDays = 0;
 
         // Iterate from day after checkout to the due date
@@ -84,19 +84,19 @@ public class CheckoutService {
             chargeableDays++;
         }
 
-        return String.valueOf(chargeableDays);
+        return chargeableDays;
     }
 
-    private String calculatePreDiscountCharge(String dailyRentalCharge, String chargeDays) {
-        return new BigDecimal(dailyRentalCharge).multiply(new BigDecimal(chargeDays)).setScale(2, RoundingMode.HALF_UP).toPlainString();
+    private BigDecimal calculatePreDiscountCharge(String dailyRentalCharge, int chargeDays) {
+        return new BigDecimal(dailyRentalCharge).multiply(BigDecimal.valueOf(chargeDays)).setScale(2, RoundingMode.HALF_UP);
     }
 
-    private String calculateDiscountAmount(String discountPercent, String preDiscountCharge) {
-        return new BigDecimal(preDiscountCharge).multiply(new BigDecimal(discountPercent).divide(new BigDecimal(100))).setScale(2, RoundingMode.HALF_UP).toPlainString();
+    private String calculateDiscountAmount(int discountPercent, BigDecimal preDiscountCharge) {
+        return preDiscountCharge.multiply(BigDecimal.valueOf(discountPercent)).divide(new BigDecimal(100)).setScale(2, RoundingMode.HALF_UP).toPlainString();
     }
 
-    private String calculateFinalCharge(String preDiscountCharge, String discountAmount) {
-        return new BigDecimal(preDiscountCharge).subtract(new BigDecimal(discountAmount)).setScale(2, RoundingMode.HALF_UP).toPlainString();
+    private BigDecimal calculateFinalCharge(BigDecimal preDiscountCharge, String discountAmount) {
+        return preDiscountCharge.subtract(new BigDecimal(discountAmount)).setScale(2, RoundingMode.HALF_UP);
     }
 
     private LocalDate getLaborDay(int year) {

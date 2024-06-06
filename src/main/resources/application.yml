@@ -1,6 +1,6 @@
 server:
     servlet:
-        context-path: "/toolrentalapp"
+        context-path: "/toolrentalapp/v1"
     port: 8080
 
 application:

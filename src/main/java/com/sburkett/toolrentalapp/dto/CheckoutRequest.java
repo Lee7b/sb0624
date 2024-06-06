@@ -1,13 +1,16 @@
 package com.sburkett.toolrentalapp.dto;
 
 import lombok.Data;
+import org.hibernate.validator.constraints.Range;
 
-import java.time.LocalDate;
+import javax.validation.constraints.Min;
 
 @Data
 public class CheckoutRequest {
     private String toolCode;
+    @Min(value = 1, message = "rentalDayCount must be 1 or greater")
     private int rentalDayCount;
-    private String discountPercent;
+    @Range(min = 0, max = 100, message = "discountPercent must be in range of 0-100")
+    private int discountPercent;
     private String checkoutDate;
 }
