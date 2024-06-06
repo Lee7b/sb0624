@@ -1,7 +1,7 @@
 package com.sburkett.toolrentalapp.controller;
 
 import com.sburkett.toolrentalapp.dto.CheckoutRequest;
-import com.sburkett.toolrentalapp.dto.RentalAgreementResponse;
+import com.sburkett.toolrentalapp.dto.CheckoutResponse;
 import com.sburkett.toolrentalapp.services.CheckoutService;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -19,7 +19,7 @@ public class CheckoutController {
     }
 
     @PostMapping(value = "/checkout")
-    public RentalAgreementResponse checkoutController(@Valid @RequestBody CheckoutRequest request) {
+    public CheckoutResponse checkoutController(@Valid @RequestBody CheckoutRequest request) {
 
         return checkoutService.processCheckout(request);
     }

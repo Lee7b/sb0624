@@ -1,8 +1,9 @@
 package com.sburkett.toolrentalapp.services;
 
-import com.sburkett.toolrentalapp.config.ToolConfig;
+import com.sburkett.toolrentalapp.db.entity.ToolEntity;
+import com.sburkett.toolrentalapp.db.repository.ToolRepository;
 import com.sburkett.toolrentalapp.dto.CheckoutRequest;
-import com.sburkett.toolrentalapp.dto.RentalAgreementResponse;
+import com.sburkett.toolrentalapp.dto.CheckoutResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -20,35 +21,35 @@ import java.util.*;
 @Slf4j
 public class CheckoutService {
     private final String requestId = UUID.randomUUID().toString();
-    private final ToolConfig toolConfig;
     private final Set<LocalDate> holidays = new HashSet<>();
+    private final ToolRepository toolRepository;
 
-    public CheckoutService(ToolConfig toolConfig) {
-        this.toolConfig = toolConfig;
+    public CheckoutService(ToolRepository toolRepository) {
+        this.toolRepository = toolRepository;
     }
 
-    public RentalAgreementResponse processCheckout(CheckoutRequest request) {
+    public CheckoutResponse processCheckout(CheckoutRequest request) {
         return buildCheckoutResponseAndLog(request);
     }
 
-    private RentalAgreementResponse buildCheckoutResponseAndLog(CheckoutRequest checkoutRequest) {
+    private CheckoutResponse buildCheckoutResponseAndLog(CheckoutRequest checkoutRequest) {
+        ToolEntity toolEntity = toolRepository.findByToolCode(checkoutRequest.getToolCode());
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM/dd/yy");
         LocalDate checkoutDate = LocalDate.parse(checkoutRequest.getCheckoutDate(), formatter);
 
-        holidays.add(LocalDate.of(checkoutDate.getYear(), 7, 4)); // July 4
+        holidays.add(getIndependenceDay(checkoutDate.getYear()));
         holidays.add(getLaborDay(checkoutDate.getYear()));
 
-        String toolType = toolConfig.getToolInfoMap().get(checkoutRequest.getToolCode()).get("tooltype");
         LocalDate dueDate = checkoutDate.plusDays(checkoutRequest.getRentalDayCount());
-        int chargeDays = getNumberOfChargeableDays(toolType, checkoutDate, dueDate);
-        String dailyRentalCharge = toolConfig.getToolPriceMap().get(toolType.toLowerCase()).get("dailycharge");
+        int chargeDays = getNumberOfChargeableDays(toolEntity, checkoutDate, dueDate);
+        String dailyRentalCharge = toolEntity.getDailyCharge();
         BigDecimal preDiscountCharge = calculatePreDiscountCharge(dailyRentalCharge, chargeDays);
         String discountAmount = calculateDiscountAmount(checkoutRequest.getDiscountPercent(), preDiscountCharge);
 
-        RentalAgreementResponse response = RentalAgreementResponse.builder()
+        CheckoutResponse response = CheckoutResponse.builder()
                 .toolCode(checkoutRequest.getToolCode())
-                .toolType(toolType)
-                .toolBrand(toolConfig.getToolInfoMap().get(checkoutRequest.getToolCode()).get("brand"))
+                .toolType(toolEntity.getToolType())
+                .toolBrand(toolEntity.getBrand())
                 .rentalDays(String.valueOf(checkoutRequest.getRentalDayCount()))
                 .checkOutDate(checkoutDate.format(formatter))
                 .dueDate(dueDate.format(formatter))
@@ -65,16 +66,16 @@ public class CheckoutService {
         return response;
     }
 
-    private int getNumberOfChargeableDays(String toolType, LocalDate checkoutDate, LocalDate dueDate) {
+    private int getNumberOfChargeableDays(ToolEntity toolEntity, LocalDate checkoutDate, LocalDate dueDate) {
         int chargeableDays = 0;
 
         // Iterate from day after checkout to the due date
         for (LocalDate date = checkoutDate.plusDays(1); !date.isAfter(dueDate); date = date.plusDays(1)) {
             boolean isWeekend = date.getDayOfWeek() == DayOfWeek.SATURDAY || date.getDayOfWeek() == DayOfWeek.SUNDAY;
             boolean isHoliday = holidays.contains(date);
-            boolean weekdayCharge = Boolean.parseBoolean(toolConfig.getToolPriceMap().get(toolType.toLowerCase()).get("weekdaycharge"));
-            boolean weekendCharge = Boolean.parseBoolean(toolConfig.getToolPriceMap().get(toolType.toLowerCase()).get("weekendcharge"));
-            boolean holidayCharge = Boolean.parseBoolean(toolConfig.getToolPriceMap().get(toolType.toLowerCase()).get("holidaycharge"));
+            boolean weekdayCharge = toolEntity.isWeekdayCharge();
+            boolean weekendCharge = toolEntity.isWeekendCharge();
+            boolean holidayCharge = toolEntity.isHolidayCharge();
 
             // Don't increment the daily charge if no charge is applicable to that day
             if (isHoliday && !holidayCharge) continue;
@@ -101,5 +102,18 @@ public class CheckoutService {
 
     private LocalDate getLaborDay(int year) {
         return LocalDate.of(year, Month.SEPTEMBER, 1).with(TemporalAdjusters.firstInMonth(DayOfWeek.MONDAY));
+    }
+
+    private LocalDate getIndependenceDay(int year) {
+        LocalDate july4th = LocalDate.of(year, 7, 4);
+        DayOfWeek dayOfWeek = july4th.getDayOfWeek();
+
+        if (dayOfWeek.equals(DayOfWeek.SATURDAY)) {
+            return july4th.minusDays(1);
+        } else if (dayOfWeek.equals(DayOfWeek.SUNDAY)) {
+            return july4th.plusDays(1);
+        } else {
+            return july4th;
+        }
     }
 }
