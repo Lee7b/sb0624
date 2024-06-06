@@ -1,6 +1,5 @@
 package com.sburkett.toolrentalapp.services;
 
-import com.sburkett.toolrentalapp.config.ToolConfig;
 import com.sburkett.toolrentalapp.db.entity.ToolEntity;
 import com.sburkett.toolrentalapp.db.repository.ToolRepository;
 import com.sburkett.toolrentalapp.dto.CheckoutRequest;
