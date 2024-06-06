@@ -3,7 +3,6 @@ package com.sburkett.toolrentalapp;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sburkett.toolrentalapp.db.repository.ToolRepository;
 import com.sburkett.toolrentalapp.dto.CheckoutRequest;
-import com.sburkett.toolrentalapp.services.CheckoutService;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -14,7 +13,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -31,10 +29,7 @@ class ToolRentalApplicationTest {
 	@Autowired
 	private ToolRepository toolRepository;
 
-	@Autowired
-	private CheckoutService checkoutService;
-
-	@ParameterizedTest
+    @ParameterizedTest
 	@CsvSource({
 			"CHNS, Chainsaw, Stihl, 1.49, true, false, true",
 			"LADW, Ladder, Werner, 1.99, true, true, false",
