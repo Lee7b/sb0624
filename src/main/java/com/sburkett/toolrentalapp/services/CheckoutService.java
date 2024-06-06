@@ -61,7 +61,7 @@ public class CheckoutService {
                 .finalCharge(NumberFormat.getCurrencyInstance().format(calculateFinalCharge(preDiscountCharge, discountAmount)))
                 .build();
 
-        log.info("RESPONSE: {} {}", requestId, response);
+        log.info("RESPONSE: {} \n{}", requestId, response.toString());
 
         return response;
     }

@@ -53,12 +53,13 @@ class ToolRentalApplicationTest {
 
 	@Test
 	public void test1_shouldThrowErrorWhenDiscountIsOutOfRange() throws Exception {
+		String expected = "{\"errorMessage\":\"discountPercent: discountPercent must be in range of 0-100\"}";
 		mockMvc.perform(MockMvcRequestBuilders
 						.post("/checkout")
 						.content(objectMapper.writeValueAsString(CheckoutRequest.builder().toolCode("JAKR").checkoutDate("09/03/215").rentalDayCount(5).discountPercent(101).build()))
 						.contentType(MediaType.APPLICATION_JSON))
-				.andDo(print())
-				.andExpect(status().is4xxClientError());
+				.andExpect(status().is4xxClientError())
+				.andExpect(content().json(expected));
 	}
 
 	@Test
@@ -118,11 +119,12 @@ class ToolRentalApplicationTest {
 
 	@Test
 	public void test7_shouldThrowErrorWhenRentalDaysIsZero() throws Exception {
+		String expected = "{\"errorMessage\":\"rentalDayCount: rentalDayCount must be 1 or greater\"}";
 		mockMvc.perform(MockMvcRequestBuilders
 						.post("/checkout")
-						.content(objectMapper.writeValueAsString(CheckoutRequest.builder().toolCode("JAKR").checkoutDate("09/03/215").rentalDayCount(0).discountPercent(101).build()))
+						.content(objectMapper.writeValueAsString(CheckoutRequest.builder().toolCode("JAKR").checkoutDate("09/03/215").rentalDayCount(0).discountPercent(0).build()))
 						.contentType(MediaType.APPLICATION_JSON))
-				.andDo(print())
-				.andExpect(status().is4xxClientError());
+				.andExpect(status().is4xxClientError())
+				.andExpect(content().json(expected));
 	}
 }
