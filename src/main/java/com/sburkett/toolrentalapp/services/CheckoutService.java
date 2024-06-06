@@ -3,7 +3,7 @@ package com.sburkett.toolrentalapp.services;
 import com.sburkett.toolrentalapp.db.entity.ToolEntity;
 import com.sburkett.toolrentalapp.db.repository.ToolRepository;
 import com.sburkett.toolrentalapp.dto.CheckoutRequest;
-import com.sburkett.toolrentalapp.dto.RentalAgreementResponse;
+import com.sburkett.toolrentalapp.dto.CheckoutResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -28,16 +28,16 @@ public class CheckoutService {
         this.toolRepository = toolRepository;
     }
 
-    public RentalAgreementResponse processCheckout(CheckoutRequest request) {
+    public CheckoutResponse processCheckout(CheckoutRequest request) {
         return buildCheckoutResponseAndLog(request);
     }
 
-    private RentalAgreementResponse buildCheckoutResponseAndLog(CheckoutRequest checkoutRequest) {
+    private CheckoutResponse buildCheckoutResponseAndLog(CheckoutRequest checkoutRequest) {
         ToolEntity toolEntity = toolRepository.findByToolCode(checkoutRequest.getToolCode());
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM/dd/yy");
         LocalDate checkoutDate = LocalDate.parse(checkoutRequest.getCheckoutDate(), formatter);
 
-        holidays.add(LocalDate.of(checkoutDate.getYear(), 7, 4)); // July 4
+        holidays.add(getIndependenceDay(checkoutDate.getYear()));
         holidays.add(getLaborDay(checkoutDate.getYear()));
 
         LocalDate dueDate = checkoutDate.plusDays(checkoutRequest.getRentalDayCount());
@@ -46,7 +46,7 @@ public class CheckoutService {
         BigDecimal preDiscountCharge = calculatePreDiscountCharge(dailyRentalCharge, chargeDays);
         String discountAmount = calculateDiscountAmount(checkoutRequest.getDiscountPercent(), preDiscountCharge);
 
-        RentalAgreementResponse response = RentalAgreementResponse.builder()
+        CheckoutResponse response = CheckoutResponse.builder()
                 .toolCode(checkoutRequest.getToolCode())
                 .toolType(toolEntity.getToolType())
                 .toolBrand(toolEntity.getBrand())
@@ -102,5 +102,18 @@ public class CheckoutService {
 
     private LocalDate getLaborDay(int year) {
         return LocalDate.of(year, Month.SEPTEMBER, 1).with(TemporalAdjusters.firstInMonth(DayOfWeek.MONDAY));
+    }
+
+    private LocalDate getIndependenceDay(int year) {
+        LocalDate july4th = LocalDate.of(year, 7, 4);
+        DayOfWeek dayOfWeek = july4th.getDayOfWeek();
+
+        if (dayOfWeek.equals(DayOfWeek.SATURDAY)) {
+            return july4th.minusDays(1);
+        } else if (dayOfWeek.equals(DayOfWeek.SUNDAY)) {
+            return july4th.plusDays(1);
+        } else {
+            return july4th;
+        }
     }
 }
