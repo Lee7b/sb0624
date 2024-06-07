@@ -10,7 +10,11 @@ Sample API Request
 ```
 
 Constraints:
+
 toolCode: Not null or empty
+
 rentalDayCount: 1 or greater
+
 discountPercent: 0-100
+
 checkoutDate: Not null or empty. format=MM/dd/yy
