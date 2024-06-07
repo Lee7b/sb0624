@@ -1,10 +1,13 @@
-Sample API Request
+Sample API 
+
+```
 {
   "toolCode": "JAKD",
   "rentalDayCount": 6,
   "discountPercent": 15,
   "checkoutDate": "07/01/24"
 }
+```
 
 Constraints:
 toolCode: Not null or empty
