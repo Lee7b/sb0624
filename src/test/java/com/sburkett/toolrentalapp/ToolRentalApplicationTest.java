@@ -1,6 +1,7 @@
 package com.sburkett.toolrentalapp;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.sburkett.toolrentalapp.db.entity.ToolEntity;
 import com.sburkett.toolrentalapp.db.repository.ToolRepository;
 import com.sburkett.toolrentalapp.dto.CheckoutRequest;
 import org.junit.jupiter.api.Assertions;
@@ -38,12 +39,13 @@ class ToolRentalApplicationTest {
 	})
     public void verifyToolRepositoryData(String toolCode, String expectedToolType, String expectedBrand, String expectedDailyCharge,
 								   boolean expectedWeekdayCharge, boolean expectedWeekendCharge, boolean expectedHolidayCharge) {
-		Assertions.assertEquals(toolRepository.findByToolCode(toolCode).getToolType(), expectedToolType);
-		Assertions.assertEquals(toolRepository.findByToolCode(toolCode).getBrand(), expectedBrand);
-		Assertions.assertEquals(toolRepository.findByToolCode(toolCode).getDailyCharge(), expectedDailyCharge);
-		Assertions.assertEquals(toolRepository.findByToolCode(toolCode).isWeekdayCharge(), expectedWeekdayCharge);
-		Assertions.assertEquals(toolRepository.findByToolCode(toolCode).isWeekendCharge(), expectedWeekendCharge);
-		Assertions.assertEquals(toolRepository.findByToolCode(toolCode).isHolidayCharge(), expectedHolidayCharge);
+		ToolEntity toolEntity = toolRepository.findByToolCode(toolCode);
+		Assertions.assertEquals(toolEntity.getToolType(), expectedToolType);
+		Assertions.assertEquals(toolEntity.getBrand(), expectedBrand);
+		Assertions.assertEquals(toolEntity.getDailyCharge(), expectedDailyCharge);
+		Assertions.assertEquals(toolEntity.isWeekdayCharge(), expectedWeekdayCharge);
+		Assertions.assertEquals(toolEntity.isWeekendCharge(), expectedWeekendCharge);
+		Assertions.assertEquals(toolEntity.isHolidayCharge(), expectedHolidayCharge);
 	}
 
 	@Test
