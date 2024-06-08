@@ -9,28 +9,28 @@ import javax.persistence.*;
 @Getter
 @Setter
 @Entity
-@Table(name = "TOOLS")
-@SecondaryTable(name = "TOOL_PRICES", pkJoinColumns = {@PrimaryKeyJoinColumn(referencedColumnName = "TOOL_TYPE")})
+@Table(name = "TOOL_PRICES")
+@SecondaryTable(name = "TOOLS")
 public class ToolEntity {
     @Id
     @Column(name = "TOOL_TYPE")
     private String toolType;
 
-    @Column(name = "TOOL_CODE")
+    @Column(name = "TOOL_CODE", table = "TOOLS")
     private String toolCode;
 
-    @Column(name = "BRAND")
+    @Column(name = "BRAND", table = "TOOLS")
     private String brand;
 
-    @Column(name = "DAILY_CHARGE", table = "TOOL_PRICES")
+    @Column(name = "DAILY_CHARGE")
     private String dailyCharge;
 
-    @Column(name = "WEEKDAY_CHARGE", table = "TOOL_PRICES")
+    @Column(name = "WEEKDAY_CHARGE")
     private boolean weekdayCharge;
 
-    @Column(name = "WEEKEND_CHARGE", table = "TOOL_PRICES")
+    @Column(name = "WEEKEND_CHARGE")
     private boolean weekendCharge;
 
-    @Column(name = "HOLIDAY_CHARGE", table = "TOOL_PRICES")
+    @Column(name = "HOLIDAY_CHARGE")
     private boolean holidayCharge;
 }
