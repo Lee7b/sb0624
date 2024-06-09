@@ -53,7 +53,7 @@ class ToolRentalApplicationTest {
 		String expected = "{\"errorMessage\":\"discountPercent: discountPercent must be in range of 0-100\"}";
 		mockMvc.perform(MockMvcRequestBuilders
 						.post("/checkout")
-						.content(objectMapper.writeValueAsString(CheckoutRequest.builder().toolCode("JAKR").checkoutDate("09/03/215").rentalDayCount(5).discountPercent(101).build()))
+						.content(objectMapper.writeValueAsString(CheckoutRequest.builder().toolCode("JAKR").checkoutDate("09/03/15").rentalDayCount(5).discountPercent(101).build()))
 						.contentType(MediaType.APPLICATION_JSON))
 				.andExpect(status().is4xxClientError())
 				.andExpect(content().json(expected));
