@@ -48,7 +48,7 @@ public class CheckoutService {
 
         LocalDate dueDate = checkoutDate.plusDays(checkoutRequest.getRentalDayCount());
         int chargeDays = getNumberOfChargeableDays(toolPricesDao, checkoutDate, dueDate);
-        String dailyRentalCharge = toolPricesDao.getDailyCharge();
+        BigDecimal dailyRentalCharge = toolPricesDao.getDailyCharge();
         BigDecimal preDiscountCharge = calculatePreDiscountCharge(dailyRentalCharge, chargeDays);
         BigDecimal discountAmount = calculateDiscountAmount(checkoutRequest.getDiscountPercent(), preDiscountCharge);
 
@@ -59,7 +59,7 @@ public class CheckoutService {
                 .rentalDays(String.valueOf(checkoutRequest.getRentalDayCount()))
                 .checkOutDate(checkoutRequest.getCheckoutDate())
                 .dueDate(dueDate.format(formatter))
-                .dailyRentalCharge(NumberFormat.getCurrencyInstance().format(new BigDecimal(dailyRentalCharge)))
+                .dailyRentalCharge(NumberFormat.getCurrencyInstance().format(dailyRentalCharge))
                 .chargeDays(String.valueOf(chargeDays))
                 .preDiscountCharge(NumberFormat.getCurrencyInstance().format(preDiscountCharge))
                 .discountPercent(checkoutRequest.getDiscountPercent() + "%")
@@ -94,8 +94,8 @@ public class CheckoutService {
         return chargeableDays;
     }
 
-    private BigDecimal calculatePreDiscountCharge(String dailyRentalCharge, int chargeDays) {
-        return new BigDecimal(dailyRentalCharge)
+    private BigDecimal calculatePreDiscountCharge(BigDecimal dailyRentalCharge, int chargeDays) {
+        return dailyRentalCharge
                 .multiply(BigDecimal.valueOf(chargeDays))
                 .setScale(2, RoundingMode.HALF_UP);
     }

@@ -1,6 +1,6 @@
 CREATE TABLE tool_prices (
     tool_type varchar(255) NOT NULL PRIMARY KEY,
-    daily_charge varchar(255) NOT NULL,
+    daily_charge decimal(19,2) NOT NULL,
     has_weekday_charge boolean,
     has_weekend_charge boolean,
     has_holiday_charge boolean

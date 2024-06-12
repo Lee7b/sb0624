@@ -8,6 +8,7 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
+import java.math.BigDecimal;
 
 @Getter
 @Setter
@@ -19,7 +20,7 @@ public class ToolPricesDao {
     private String toolType;
 
     @Column(name = "daily_charge")
-    private String dailyCharge;
+    private BigDecimal dailyCharge;
 
     @Column(name = "has_weekday_charge")
     private boolean weekdayCharge;
