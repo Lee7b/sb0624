@@ -1,15 +1,15 @@
-create table TOOL_PRICES (
-    TOOL_TYPE varchar(255) NOT NULL PRIMARY KEY,
-    DAILY_CHARGE varchar(255) NOT NULL,
-    WEEKDAY_CHARGE boolean,
-    WEEKEND_CHARGE boolean,
-    HOLIDAY_CHARGE boolean
+CREATE TABLE tool_prices (
+    tool_type varchar(255) NOT NULL PRIMARY KEY,
+    daily_charge decimal(19,2) NOT NULL,
+    has_weekday_charge boolean,
+    has_weekend_charge boolean,
+    has_holiday_charge boolean
 );
 
-create table TOOLS (
-    TOOL_TYPE varchar(255) NOT NULL,
-    TOOL_CODE varchar(255) NOT NULL PRIMARY KEY,
-    BRAND varchar(255) NOT NULL,
+CREATE TABLE tools (
+    tool_type varchar(255) NOT NULL,
+    tool_code varchar(255) NOT NULL PRIMARY KEY,
+    brand varchar(255) NOT NULL,
     CONSTRAINT FK_TOOL_TYPE FOREIGN KEY (TOOL_TYPE) REFERENCES TOOL_PRICES(TOOL_TYPE)
 );
 
