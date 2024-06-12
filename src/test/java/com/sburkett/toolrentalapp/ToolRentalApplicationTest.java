@@ -1,9 +1,12 @@
 package com.sburkett.toolrentalapp;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.sburkett.toolrentalapp.db.entity.ToolEntity;
-import com.sburkett.toolrentalapp.db.repository.ToolRepository;
+import com.sburkett.toolrentalapp.db.entity.ToolPricesDao;
+import com.sburkett.toolrentalapp.db.entity.ToolsDao;
+import com.sburkett.toolrentalapp.db.repository.ToolPricesRepository;
+import com.sburkett.toolrentalapp.db.repository.ToolsRepository;
 import com.sburkett.toolrentalapp.dto.CheckoutRequest;
+import com.sburkett.toolrentalapp.services.CheckoutService;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -28,7 +31,13 @@ class ToolRentalApplicationTest {
 	private MockMvc mockMvc;
 
 	@Autowired
-	private ToolRepository toolRepository;
+	private CheckoutService checkoutService;
+
+	@Autowired
+	private ToolsRepository toolsRepository;
+
+	@Autowired
+	private ToolPricesRepository toolPricesRepository;
 
     @ParameterizedTest
 	@CsvSource({
@@ -39,13 +48,15 @@ class ToolRentalApplicationTest {
 	})
     public void verifyToolRepositoryData(String toolCode, String expectedToolType, String expectedBrand, String expectedDailyCharge,
 								   boolean expectedWeekdayCharge, boolean expectedWeekendCharge, boolean expectedHolidayCharge) {
-		ToolEntity toolEntity = toolRepository.findByToolCode(toolCode);
-		Assertions.assertEquals(toolEntity.getToolType(), expectedToolType);
-		Assertions.assertEquals(toolEntity.getBrand(), expectedBrand);
-		Assertions.assertEquals(toolEntity.getDailyCharge(), expectedDailyCharge);
-		Assertions.assertEquals(toolEntity.isWeekdayCharge(), expectedWeekdayCharge);
-		Assertions.assertEquals(toolEntity.isWeekendCharge(), expectedWeekendCharge);
-		Assertions.assertEquals(toolEntity.isHolidayCharge(), expectedHolidayCharge);
+		ToolsDao toolsDao = toolsRepository.findByToolCode(toolCode);
+		ToolPricesDao  toolPricesDao  = toolPricesRepository.findByToolType(toolsDao.getToolType());
+
+		Assertions.assertEquals(toolPricesDao.getToolType(), expectedToolType);
+		Assertions.assertEquals(toolsDao.getBrand(), expectedBrand);
+		Assertions.assertEquals(toolPricesDao.getDailyCharge(), expectedDailyCharge);
+		Assertions.assertEquals(toolPricesDao.isWeekdayCharge(), expectedWeekdayCharge);
+		Assertions.assertEquals(toolPricesDao.isWeekendCharge(), expectedWeekendCharge);
+		Assertions.assertEquals(toolPricesDao.isHolidayCharge(), expectedHolidayCharge);
 	}
 
 	@Test
